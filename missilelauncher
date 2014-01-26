@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+
+require_relative 'missilelauncher'
+
+ml = MissileLauncher.new.connect
+STDIN.each do |line|
+  rot = nil
+  tilt = nil
+  fire = nil
+  cmds = line.chomp.downcase.split.each do |cmd|
+    case cmd
+      when /^cc(w)?$/; rot = -1
+      when /^c(w)?$/; rot = 1
+      when /^d(own)?$/; tilt = -1
+      when /^u(p)?$/; tilt = 1
+      when /^s(top)?$/; rot = 0; tilt = 0
+      when /^f(ire)?$/; fire = true
+      when /^a(bort)?$/; fire = false
+    end
+  end
+  if !cmds.empty?
+    ml.move(rot||0,tilt||0) if rot||tilt
+    ml.fire if fire
+    ml.abort if !fire.nil?&&!fire
+  else
+    puts "ccw | cw | down | up | stop | fire | abort"
+  end
+end
