@@ -2,7 +2,18 @@
 
 require_relative 'missilelauncher'
 
-ml = MissileLauncher.new.connect
+msgs = Queue.new
+ml = MissileLauncher.new(msgs).connect
+Thread.new do
+  loop do
+    msg = msgs.pop
+    if msg == :FIRED
+      puts "* fired"
+    else
+      puts ": " + msg.map{|m|m.to_s.downcase}.join(' ')
+    end
+  end
+end
 STDIN.each do |line|
   rot = nil
   tilt = nil
