@@ -18,7 +18,7 @@ class MissileLauncher
     begin
       loop do
         limits = io.read_limits
-        new = !@queue.empty? ? Set.new(@queue.pop) : commands
+        new = (commands.empty? || !@queue.empty?) ? Set.new(@queue.pop) : commands
         if new == Set.new([:FIRE]) || new == Set.new([:ABORT])
           req_fire = (new == Set.new([:FIRE]))
           new = commands
