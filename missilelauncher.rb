@@ -3,9 +3,10 @@ require 'set'
 
 class MissileLauncher
   SAMPLE_DUR_SEC = 0.2
-  def initialize
+  def initialize(msg_queue=nil)
     @thread = nil
     @queue = Queue.new
+    @msg_queue = msg_queue
   end
   def control_loop
     Thread.current.abort_on_exception = true
@@ -27,18 +28,19 @@ class MissileLauncher
         charge_history << {time: Time.now.to_f, charge: limits.include?(:CHARGE)}
         charge_history = charge_history.reject{|c|Time.now.to_f-c[:time]>SAMPLE_DUR_SEC}
         if Time.now.to_f - start_time > SAMPLE_DUR_SEC
-          if ready_fire && charge_history.all?{|c|!c[:charge]}
-            ready_fire = false
-            req_fire = false
-          end
           if !ready_fire && charge_history.all?{|c|c[:charge]}
             ready_fire = true
+          elsif ready_fire && charge_history.any?{|c|!c[:charge]}
+            ready_fire = false
+            req_fire = false
+            @msg_queue << :FIRED if @msg_queue
           end
           new += [:CHARGE] if req_fire || !ready_fire
         end
         if new != commands
           io.do *new
           commands = new
+          @msg_queue << commands.to_a if @msg_queue
         end
       end
     ensure
